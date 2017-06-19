@@ -21,11 +21,13 @@ extern const CGFloat AIRMapZoomBoundBuffer;
 @interface AIRMap: MKMapView<SMCalloutViewDelegate>
 
 @property (nonatomic, strong) SMCalloutView *calloutView;
+@property (nonatomic, strong) CLLocationManager *locationManager;
 @property (nonatomic, strong) UIImageView *cacheImageView;
 @property (nonatomic, strong) UIView *loadingView;
 
 @property (nonatomic, copy) NSString *userLocationAnnotationTitle;
 @property (nonatomic, assign) BOOL followUserLocation;
+@property (nonatomic, assign) BOOL followDeviceHeading;
 @property (nonatomic, assign) BOOL hasStartedRendering;
 @property (nonatomic, assign) BOOL cacheEnabled;
 @property (nonatomic, assign) BOOL loadingEnabled;

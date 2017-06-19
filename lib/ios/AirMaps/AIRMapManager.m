@@ -67,6 +67,7 @@ RCT_EXPORT_MODULE()
 RCT_EXPORT_VIEW_PROPERTY(showsUserLocation, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(userLocationAnnotationTitle, NSString)
 RCT_EXPORT_VIEW_PROPERTY(followsUserLocation, BOOL)
+RCT_EXPORT_VIEW_PROPERTY(followsDeviceHeading, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(showsPointsOfInterest, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(showsBuildings, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(showsCompass, BOOL)
@@ -215,9 +216,16 @@ RCT_EXPORT_METHOD(fitToCoordinates:(nonnull NSNumber *)reactTag
             CGFloat right = [RCTConvert CGFloat:edgePadding[@"right"]];
             CGFloat bottom = [RCTConvert CGFloat:edgePadding[@"bottom"]];
             CGFloat left = [RCTConvert CGFloat:edgePadding[@"left"]];
+            
+            MKMapCamera* cameraCopy = mapView.camera;
 
             [mapView setVisibleMapRect:[polyline boundingMapRect] edgePadding:UIEdgeInsetsMake(top, left, bottom, right) animated:animated];
 
+            // TODO: encapsulate this as a method.
+//            MKMapCamera* camera = [MKMapCamera new];
+//            camera.altitude = 40; // TODO: describe how we pick this constant.
+//            camera.pitch = 65.0; // TODO: describe how we pick this constant.
+            mapView.camera = cameraCopy;
         }
     }];
 }
@@ -607,6 +615,9 @@ static int kDragCenterContext;
 
         // Move to user location only for the first time it loads up.
         // mapView.followUserLocation = NO;
+
+        // Adjust the MKMapCamera to follow the user
+        mapView.camera.centerCoordinate = location.coordinate;
     }
 }
 
