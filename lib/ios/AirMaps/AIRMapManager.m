@@ -27,6 +27,7 @@
 #import "RCTConvert+AirMap.h"
 
 #import <MapKit/MapKit.h>
+#import <math.h>
 
 static NSString *const RCTMapViewKey = @"MapView";
 
@@ -202,30 +203,7 @@ RCT_EXPORT_METHOD(fitToCoordinates:(nonnull NSNumber *)reactTag
             RCTLogError(@"Invalid view returned from registry, expecting AIRMap, got: %@", view);
         } else {
             AIRMap *mapView = (AIRMap *)view;
-
-            // Create Polyline with coordinates
-            CLLocationCoordinate2D coords[coordinates.count];
-            for(int i = 0; i < coordinates.count; i++)
-            {
-                coords[i] = coordinates[i].coordinate;
-            }
-            MKPolyline *polyline = [MKPolyline polylineWithCoordinates:coords count:coordinates.count];
-
-            // Set Map viewport
-            CGFloat top = [RCTConvert CGFloat:edgePadding[@"top"]];
-            CGFloat right = [RCTConvert CGFloat:edgePadding[@"right"]];
-            CGFloat bottom = [RCTConvert CGFloat:edgePadding[@"bottom"]];
-            CGFloat left = [RCTConvert CGFloat:edgePadding[@"left"]];
-            
-            MKMapCamera* cameraCopy = mapView.camera;
-
-            [mapView setVisibleMapRect:[polyline boundingMapRect] edgePadding:UIEdgeInsetsMake(top, left, bottom, right) animated:animated];
-
-            // TODO: encapsulate this as a method.
-//            MKMapCamera* camera = [MKMapCamera new];
-//            camera.altitude = 40; // TODO: describe how we pick this constant.
-//            camera.pitch = 65.0; // TODO: describe how we pick this constant.
-            mapView.camera = cameraCopy;
+            [self _fitToCoordinates:mapView coordinates:coordinates];
         }
     }];
 }
@@ -616,8 +594,10 @@ static int kDragCenterContext;
         // Move to user location only for the first time it loads up.
         // mapView.followUserLocation = NO;
 
-        // Adjust the MKMapCamera to follow the user
         mapView.camera.centerCoordinate = location.coordinate;
+
+        // Adjust the MKMapCamera to follow the user
+        [self _fitToMarkers:mapView];
     }
 }
 
@@ -665,6 +645,56 @@ static int kDragCenterContext;
 }
 
 #pragma mark Private
+     
+     
+ - (void)_fitToCoordinates:(AIRMap *)mapView
+               coordinates:(nonnull NSArray<AIRMapCoordinate *> *)coordinates
+ {
+     CGFloat maxDistance = 0;
+     MKMapPoint regionCenterPoint = MKMapPointForCoordinate(mapView.region.center);
+     
+     for (int i = 0; i < coordinates.count; i++) {
+         MKMapPoint coordPoint = MKMapPointForCoordinate(coordinates[i].coordinate);
+         CGFloat distance = MKMetersBetweenMapPoints(regionCenterPoint, coordPoint);
+         if (distance > maxDistance) {
+             maxDistance = distance;
+         }
+     }
+     [self _setCameraAltitudeByMaxDistance:mapView :maxDistance];
+ }
+
+- (void)_fitToMarkers:(AIRMap *)mapView
+{
+    CGFloat maxDistance = 0;
+    MKMapPoint regionCenterPoint = MKMapPointForCoordinate(mapView.region.center);
+
+    for (AIRMapMarker *marker in mapView.annotations) {
+        MKMapPoint coordPoint = MKMapPointForCoordinate(marker.coordinate);
+        CGFloat distance = MKMetersBetweenMapPoints(regionCenterPoint, coordPoint);
+        if (distance > maxDistance) {
+            maxDistance = distance;
+        }
+    }
+    [self _setCameraAltitudeByMaxDistance:mapView :maxDistance];
+}
+     
+     
+- (void)_setCameraAltitudeByMaxDistance:(AIRMap *)mapView
+                                       :(CGFloat)maxDistance
+{
+     CGFloat padding = 5; // meters
+
+     MKMapCamera* newCamera = [MKMapCamera new];
+     newCamera.heading = mapView.camera.heading;
+     newCamera.centerCoordinate = mapView.camera.centerCoordinate;
+     // TODO: experiment more w/ pitch values
+     newCamera.pitch = 70.0;
+     
+     CGFloat altitude = ((maxDistance+padding)*3.28) / tan(newCamera.pitch*M_PI/180);
+     newCamera.altitude = altitude;
+     
+     mapView.camera = newCamera;
+}
 
 - (void)_onTick:(NSTimer *)timer
 {

@@ -77,12 +77,9 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
 
         // Init the MKMapCamera
         MKMapCamera* camera = [MKMapCamera new];
-        camera.heading = 0; // TODO: test if we can omit.
-        camera.altitude = 40;
-        camera.pitch = 65.0;
+        camera.pitch = 55.0;
         camera.centerCoordinate = self.region.center;
         self.camera = camera;
-
 
         // 3rd-party callout view for MapKit that has more options than the built-in. It's painstakingly built to
         // be identical to the built-in callout view (which has a private API)
@@ -92,10 +89,6 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
         // Init the CLLocationManager
         self.locationManager = [[CLLocationManager alloc] init];
         self.locationManager.delegate = self;
-        self.locationManager.headingFilter = 1;
-        if (self.followDeviceHeading) {
-          [self.locationManager startUpdatingHeading];
-        }
     }
     return self;
 }
@@ -236,6 +229,10 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
 - (void)setFollowsDeviceHeading:(BOOL)followsDeviceHeading
 {
     _followDeviceHeading = followsDeviceHeading;
+    if (_followDeviceHeading == YES) {
+        self.locationManager.headingFilter = 1;
+        [self.locationManager startUpdatingHeading];
+    }
 }
 
 - (void)setHandlePanDrag:(BOOL)handleMapDrag {
@@ -460,7 +457,7 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
 
     [UIView beginAnimations:nil context:nil];
     [UIView setAnimationCurve:UIViewAnimationCurveLinear];
-    [UIView setAnimationDuration:0.3];
+    [UIView setAnimationDuration:0.1];
     self.camera = newCamera;
     [UIView commitAnimations];
 }
