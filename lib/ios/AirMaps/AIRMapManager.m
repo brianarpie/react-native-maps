@@ -682,15 +682,17 @@ static int kDragCenterContext;
 - (void)_setCameraAltitudeByMaxDistance:(AIRMap *)mapView
                                        :(CGFloat)maxDistance
 {
-     CGFloat padding = 5; // meters
-
+     if (maxDistance == 0)
+     {
+         maxDistance = 100;
+     }
      MKMapCamera* newCamera = [MKMapCamera new];
      newCamera.heading = mapView.camera.heading;
      newCamera.centerCoordinate = mapView.camera.centerCoordinate;
-     // TODO: experiment more w/ pitch values
      newCamera.pitch = 70.0;
-     
-     CGFloat altitude = ((maxDistance+padding)*3.28) / tan(newCamera.pitch*M_PI/180);
+     // camera aperture is approx 25.5 degrees
+     CGFloat cameraAperture = 25.5;
+     CGFloat altitude = maxDistance / tan(cameraAperture*M_PI/180);
      newCamera.altitude = altitude;
      
      mapView.camera = newCamera;

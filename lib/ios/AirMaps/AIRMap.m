@@ -230,7 +230,8 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
 {
     _followDeviceHeading = followsDeviceHeading;
     if (_followDeviceHeading == YES) {
-        self.locationManager.headingFilter = 1;
+        self.locationManager.headingFilter = 0.5;
+
         [self.locationManager startUpdatingHeading];
     }
 }
@@ -448,18 +449,8 @@ const CGFloat AIRMapZoomBoundBuffer = 0.01;
     CLLocationDirection heading = ((newHeading.trueHeading > 0) ?
                                     newHeading.trueHeading : newHeading.magneticHeading);
 
-    // We replace the camera to add animations.
-    MKMapCamera* newCamera = [MKMapCamera new];
-    newCamera.heading = heading;
-    newCamera.pitch = self.camera.pitch;
-    newCamera.altitude = self.camera.altitude;
-    newCamera.centerCoordinate = self.camera.centerCoordinate;
+    self.camera.heading = heading;
 
-    [UIView beginAnimations:nil context:nil];
-    [UIView setAnimationCurve:UIViewAnimationCurveLinear];
-    [UIView setAnimationDuration:0.1];
-    self.camera = newCamera;
-    [UIView commitAnimations];
 }
 
 - (void)beginLoading {
