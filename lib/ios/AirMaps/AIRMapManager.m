@@ -682,10 +682,8 @@ static int kDragCenterContext;
 - (void)_setCameraAltitudeByMaxDistance:(AIRMap *)mapView
                                        :(CGFloat)maxDistance
 {
-     if (maxDistance == 0)
-     {
-         maxDistance = 100;
-     }
+     CGFloat minAltitude = 500;
+
      MKMapCamera* newCamera = [MKMapCamera new];
      newCamera.heading = mapView.camera.heading;
      newCamera.centerCoordinate = mapView.camera.centerCoordinate;
@@ -693,9 +691,18 @@ static int kDragCenterContext;
      // camera aperture is approx 25.5 degrees
      CGFloat cameraAperture = 25.5;
      CGFloat altitude = maxDistance / tan(cameraAperture*M_PI/180);
-     newCamera.altitude = altitude;
-     
-     mapView.camera = newCamera;
+    
+     if (altitude < minAltitude) {
+         newCamera.altitude = minAltitude;
+     } else {
+         newCamera.altitude = altitude;
+     }
+    [UIView beginAnimations:nil context:nil];
+    [UIView setAnimationCurve:UIViewAnimationCurveLinear];
+    [UIView setAnimationDuration:0.3];
+    mapView.camera = newCamera;
+    [UIView commitAnimations];
+    
 }
 
 - (void)_onTick:(NSTimer *)timer
